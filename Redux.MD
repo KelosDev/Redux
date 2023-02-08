@@ -245,3 +245,40 @@ In pratica, "memorizzare" significa semplicemente archiviare o memorizzare un va
 In sintesi, "memorizzare" è un verbo generale che significa archiviare informazioni, mentre "memoizzare" è un termine più specifico che si riferisce alla memorizzazione dei risultati delle funzioni per migliorare le prestazioni dell'applicazione.
 
 ---
+
+## Redux Thunk (x rtk)
+
+Redux Thunk è un middleware che consente di scrivere azioni asincrone in un'applicazione Redux. Ecco i passaggi per utilizzarlo:
+
+1) Installare Redux Thunk tramite npm: 'npm install redux-thunk'
+2) Importare il middleware nell'applicazione Redux e configurarlo nella funzione 'configureStore' fornita da redux toolkit:
+```js
+import { configureStore, getDefaultMiddleware } from '@reduxjs/toolkit';
+import thunk from 'redux-thunk';
+import rootReducer from './reducers';
+
+const store = configureStore({
+  reducer: rootReducer,
+  middleware: [...getDefaultMiddleware(), thunk],
+});
+```
+3) Scrivere azioni asincrone che ritornano funzioni anzichè oggetti. Queste funzioni possono quindi dispatchare altre azioni e chiamare API asincrone:
+```js
+export const fetchData = () => {
+  return (dispatch) => {
+    fetch('https://my-api.com/data')
+      .then((response) => response.json())
+      .then((data) => {
+        dispatch({ type: 'FETCH_SUCCESS', payload: data });
+      });
+  };
+};
+```
+4) Dispatchare queste azioni nei componenti React o nei reducer:
+```js
+import { fetchData } from './actions';
+
+...
+
+dispatch(fetchData());
+```
