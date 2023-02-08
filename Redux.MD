@@ -18,6 +18,17 @@ Redux consente di gestire lo stato 'globale', ovvero lo stato necessario in molt
 4) L'app ha una base di codice di medie o grandi dimensioni e potrebbe essere utilizzata da molte persone
 
 ---
+## Store, Actions, Reducers
+
+In Redux, i reducers, le actions e lo store sono tre componenti principali che lavorano inseme per gestire lo stato dell'applicazione.
+
+1) **Reducer**: Un reducer è una funzione che modifica lo stato dell'applicazione. Riceve l'azione corrente e lo stato corrente dell'applicazione come input e restituisce un nuovo stato dell'applicazione. I reducers sono immutabili, il che significa che non modificano direttamente lo stato corrente, ma restituiscono un nuovo stato.
+2) **Actions**: Le actions sono oggetti che descrivono le azioni che l'utente o l'applicazione possono intraprendere. Ogni azione ha un tipo che descrive il tupo di azione e, a volte, un payload che fornisce ulteriori dettagli sulle azioni da eseguire.
+3) **Store**: Lo store è il contenitore centrale di Redux che contiene lo stato dell'applicazione. E' possibile accedere ai dati dello stato tramite la funzione 'getState' e modificare lo stato tramite la funzione 'dispatch' che accetta un'azione come input.
+
+In sintesi, i reducers gesticono i cambiamenti dello stato dell'applicazione, le actions descrivono le azioni da intraprendere e lo store è il contenitore centrale che tiene traccia dello stato dell'applicazione. Questi tre componenti lavorano insieme per rendere l'applicazione reattiva ai cambiamenti di stato.
+
+---
 
 # REDUX TOOLKIT
 
@@ -282,6 +293,7 @@ import { fetchData } from './actions';
 
 dispatch(fetchData());
 ```
+
 
 ---
 
