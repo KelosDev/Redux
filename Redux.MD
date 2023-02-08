@@ -282,3 +282,251 @@ import { fetchData } from './actions';
 
 dispatch(fetchData());
 ```
+
+---
+
+## Esempio pratico di utilizzo - Gestione carrello della spesa
+
+In un file 'cartSlice.ts'
+
+```ts
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { AppThunk } from '../store';
+import axios from 'axios';
+
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+interface CartState {
+  items: CartItem[];
+  loading: boolean;
+  error: string | null;
+}
+
+const initialState: CartState = {
+  items: [],
+  loading: false,
+  error: null,
+};
+
+export const fetchCart = createAsyncThunk(
+  'cart/fetchCart',
+  async (): Promise<CartItem[]> => {
+    try {
+      const response = await axios.get('/api/cart');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+);
+
+const cartSlice = createSlice({
+  name: 'cart',
+  initialState,
+  reducers: {
+    addToCart(state, action) {
+      const { id, name, price } = action.payload;
+      state.items.push({ id, name, price, quantity: 1 });
+    },
+    removeFromCart(state, action) {
+      const { id } = action.payload;
+      state.items = state.items.filter((item) => item.id !== id);
+    },
+    updateCartItem(state, action) {
+      const { id, quantity } = action.payload;
+      const itemIndex = state.items.findIndex((item) => item.id === id);
+      state.items[itemIndex].quantity = quantity;
+    },
+  },
+  extraReducers: (builder) => {
+    builder.addCase(fetchCart.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchCart.fulfilled, (state, action) => {
+      state.loading = false;
+      state.items = action.payload;
+    });
+    builder.addCase(fetchCart.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message;
+    });
+  },
+});
+
+export const { addToCart, removeFromCart, updateCartItem } = cartSlice.actions;
+
+export default cartSlice.reducer;
+
+export const fetchCartItems = (): AppThunk => (dispatch) => {
+  dispatch(fetchCart());
+};
+```
+
+1) Importazioni:
+```ts
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { AppThunk } from '../store';
+import axios from 'axios';
+```
+Queste sono le importazioni dei moduli di Redux Toolkit e di axios. 'createSlice' e 'createAsyncThunk' sono funzioni fornite da Redux Toolkit per creare rispettivamente uno slice e un thunk. 'AppThunk' è un tipo che definisce il tipo di un'azione asincrona. Infine 'axios' per effettuare chiamate HTTP.
+
+2) Interfacce:
+```ts
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+interface CartState {
+  items: CartItem[];
+  loading: boolean;
+  error: string | null;
+}
+```
+Queste sono due interfacce che descrivono rispettivamente un elemento del carrello e lo stato del carrello.
+
+3) Stato iniziale:
+```ts
+const initialState: CartState = {
+  items: [],
+  loading: false,
+  error: null,
+};
+```
+
+Questa è la definizione dello stato iniziale del carrello. Viene inizializzato con un array vuoto di elementi del carrello, un flag 'loading' impostato su 'false' e una stringa 'error' impostata su 'null'.
+
+4) Thunk asincorno 'fetchCart':
+```ts
+export const fetchCart = createAsyncThunk(
+  'cart/fetchCart',
+  async (): Promise<CartItem[]> => {
+    try {
+      const response = await axios.get('/api/cart');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+);
+```
+Questo è il codice per creare un thunk asincrono 'fetchCart' che recupera i dati del carrello dall'API. La funzione 'createAsyncThunk' accetta due argomenti: il primo è una stringa che identifica il tipo dell'azione, il secondo è una funzione asincrona che esegue l'effettiva chiamata API. Se la chiamata ha successo, viene restituito il corpo della risposta come array di elementi del carrello. In caso contrario viene lanciata un'eccezione.
+
+5) Slice 'cart'
+```ts
+const cartSlice = createSlice({
+  name: 'cart',
+  initialState,
+  reducers: {
+    addToCart(state, action) {
+      const { id, name, price } = action.payload;
+      state.items.push({ id, name, price, quantity: 1 });
+    },
+    removeFromCart(state, action) {
+      state.items = state.items.filter(item => item.id !== action.payload);
+    },
+    incrementQuantity(state, action) {
+      const item = state.items.find(item => item.id === action.payload);
+      if (item) {
+        item.quantity++;
+      }
+    },
+    decrementQuantity(state, action) {
+      const item = state.items.find(item => item.id === action.payload);
+      if (item && item.quantity > 1) {
+        item.quantity--;
+      }
+    },
+  },
+  extraReducers: {
+    [fetchCart.pending.type]: (state) => {
+      state.loading = true;
+      state.error = null;
+    },
+    [fetchCart.fulfilled.type]: (state, action) => {
+      state.loading = false;
+      state.items = action.payload;
+    },
+    [fetchCart.rejected.type]: (state, action) => {
+      state.loading = false;
+      state.error = action.error.message;
+    },
+  },
+});
+```
+Questo slice di Redux definisce le azioni per gestire il carrello, come 'addToCart', 'removeFromCart', 'incrementQuantity' e 'decrementQuantity'. Inoltre 'extraReducers' viene utilizzato per gestire le azioni di stato del thunk asincrono 'fetchCart' come 'pending', 'fulfilled' e 'rejected'. QUesti gestori di stato impostano i valori di 'loading', 'error' e 'items' in base ai risultati della richiesta HTTP.
+
+6) Esportazinoe delle azioni e dello sato dallo slice:
+```ts
+export const { addToCart, removeFromCart, incrementQuantity, decrementQuantity } = cartSlice.actions;
+
+export default cartSlice.reducer;
+
+export const selectCartItems = (state: RootState) => state.cart.items;
+export const selectCartLoading = (state: RootState) => state.cart.loading;
+export const selectCartError = (state: RootState) => state.cart.error;
+```
+Queste righe esportano le azioni e il reducer dallo slice di Redux. Inoltre vengono definite tre selezioni per accedere allo sato del carrello, 'selectCartItems', 'selectCartLoading' e 'selectCartError'. Queste selezioni possono essere utilizzate in componenti React per accedere allo stato del carrello.
+
+7) Utilizzo delle azioni e dello stato nel componente React: (in un file 'Cart.tsx')
+```ts
+const Cart: React.FC = () => {
+  const dispatch = useDispatch();
+  const items = useSelector(selectCartItems);
+  const loading = useSelector(selectCartLoading);
+  const error = useSelector(selectCartError);
+
+  const handleAddToCart = (id: string, name: string, price: number) => {
+    dispatch(addToCart({ id, name, price }));
+  };
+
+  const handleRemoveFromCart = (id: string) => {
+    dispatch(removeFromCart(id));
+  };
+
+  const handleIncrementQuantity = (id: string) => {
+    dispatch(incrementQuantity(id));
+  };
+
+  const handleDecrementQuantity = (id: string) => {
+    dispatch(decrementQuantity(id));
+  };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>{error}</div>;
+  }
+
+  return (
+    <div>
+      {items.map(item => (
+        <CartItem
+          key={item.id}
+          id={item.id}
+          name={item.name}
+          price={item.price}
+          quantity={item.quantity}
+          onRemove={handleRemoveFromCart}
+          onIncrement={handleIncrementQuantity}
+          onDecrement={handleDecrementQuantity}
+        />
+      ))}
+      <AddToCartForm onAdd={handleAddToCart} />
+    </div>
+  );
+};
+```
+In questo componente 'Cart', viene utilizzato 'useDispatch' per accedere alla funzione di dispatch di Redux e 'useSelector' per accedere allo stato del carrello tramite i selectors definiti in precedenza. Viene anche definita una serie di gestori di eventi per gestire le azioni relative al carrello, come 'handleAddToCart', 'handleRemoveFromCart', 'handleIncrementQuantity' e 'hnaldeDecrementQuantity'. QUesti gestori di eventi dispatchano le relative azioni di Redux usando la funzione di dispatch. 
+
+Infine viene visualizzato lo stato del carrello con un messaggio di 'Loading...' se il carrello sta ancora caricando, un messaggio di errore se si è verificato un errore durante il caricamento del carrello o una lista di elementi nel carrello se il carrello è stato caricato con successo.
